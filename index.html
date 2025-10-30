@@ -1,128 +1,162 @@
-<script>
-    // --- CONFIGURAÇÃO PREENCHIDA ---
-    const SUPABASE_URL = 'https://vzmhnponxmrvoqctmpty.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6bWhucG9ueG1ydm9xY3RtcHR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3Mzg5MjYsImV4cCI6MjA3MDMxNDkyNn0.sSfMCpPKwFp2lVLuWnFN066OT0lluMb-sd-kWb1PePg';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ateliê de la Roche - Curadoria</title>
+    <!-- Import Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #2c2c2c; color: #f0f0f0; margin: 0; padding: 2rem; }
+        h1 { text-align: center; border-bottom: 1px solid #555; padding-bottom: 1rem; }
+        #gallery { display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center; }
+        .card { background-color: #3a3a3a; border-radius: 8px; overflow: hidden; width: 350px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); display: flex; flex-direction: column; }
+        .card img { width: 100%; height: 350px; object-fit: cover; background-color: #222; }
+        .card-content { padding: 1rem; flex-grow: 1; }
+        .card-title { font-size: 1.1rem; font-weight: bold; margin: 0 0 0.5rem; }
+        .card-description { font-size: 0.9rem; color: #ccc; max-height: 100px; overflow-y: auto; }
+        .card-actions { display: flex; gap: 1rem; padding: 1rem; border-top: 1px solid #555; }
+        .card-actions button { flex-grow: 1; padding: 0.8rem; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: all 0.2s; }
+        .approve-btn { background-color: #28a745; color: white; }
+        .reject-btn { background-color: #dc3545; color: white; }
+        .approve-btn:hover { background-color: #218838; }
+        .reject-btn:hover { background-color: #c82333; }
+        .card.processing { opacity: 0.5; pointer-events: none; }
+        #loading { text-align: center; font-size: 1.5rem; padding: 4rem; }
+    </style>
+</head>
+<body>
 
-    const N8N_APPROVE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/N8N_APPROVE_WEBHOOK';
-    const N8N_REJECT_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/N8N_REJECT_WEBHOOK';
-    // -----------------------------
-    
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const gallery = document.getElementById('gallery');
-    const loadingMessage = document.getElementById('loading');
-    const cardTemplate = document.getElementById('card-template');
+    <h1>Ateliê de la Roche - Curadoria</h1>
+    <div id="gallery">
+        <p id="loading">Carregando obras pendentes...</p>
+    </div>
 
-    // ******** CORREÇÃO PRINCIPAL AQUI ********
-    // Esta função agora é mais robusta e extrai o ID de vários tipos de links do Google Drive.
-    function getGoogleDriveFileId(url) {
-        if (!url) return null;
-        let fileId = null;
-        // Padrão 1: /file/d/FILE_ID/
-        let match = url.match(/file\/d\/([a-zA-Z0-9_-]+)/);
-        if (match) {
-            fileId = match[1];
-        } else {
-            // Padrão 2: ?id=FILE_ID (funciona para uc? e open?)
-            match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+    <template id="card-template">
+        <div class="card">
+            <img src="" alt="Artwork">
+            <div class="card-content">
+                <h3 class="card-title"></h3>
+                <p class="card-description"></p>
+            </div>
+            <div class="card-actions">
+                <button class="approve-btn">Aprovar</button>
+                <button class="reject-btn">Rejeitar</button>
+            </div>
+        </div>
+    </template>
+
+    <script>
+        const SUPABASE_URL = 'https://vzmhnponxmrvoqctmpty.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6bWhucG9ueG1ydm9xY3RtcHR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3Mzg5MjYsImV4cCI6MjA3MDMxNDkyNn0.sSfMCpPKwFp2lVLuWnFN066OT0lluMb-sd-kWb1PePg';
+        const N8N_APPROVE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/N8N_APPROVE_WEBHOOK';
+        const N8N_REJECT_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/N8N_REJECT_WEBHOOK';
+        
+        // ******** CORREÇÃO PRINCIPAL AQUI ********
+        // A biblioteca do Supabase cria um objeto global chamado 'supabase'.
+        // Nós o usamos para criar a nossa instância do cliente.
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // *****************************************
+
+        const gallery = document.getElementById('gallery');
+        const loadingMessage = document.getElementById('loading');
+        const cardTemplate = document.getElementById('card-template');
+
+        function getGoogleDriveFileId(url) {
+            if (!url) return null;
+            let fileId = null;
+            let match = url.match(/file\/d\/([a-zA-Z0-9_-]+)/);
             if (match) {
                 fileId = match[1];
+            } else {
+                match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                if (match) fileId = match[1];
             }
+            return fileId;
         }
-        return fileId;
-    }
 
-    async function fetchAndRenderIdeas() {
-        try {
-            const { data, error } = await supabaseClient
-                .from('scene_ideas')
-                .select('*')
-                .eq('status', 'pending_review')
-                .order('created_at', { ascending: false });
+        async function fetchAndRenderIdeas() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('scene_ideas')
+                    .select('*')
+                    .eq('status', 'pending_review')
+                    .order('created_at', { ascending: false });
 
-            if (error) throw error;
-
-            if (data.length === 0) {
-                loadingMessage.textContent = 'Nenhuma obra para revisar. O ateliê está em dia!';
-                return;
-            }
-
-            loadingMessage.style.display = 'none';
-
-            data.forEach(idea => {
-                const card = cardTemplate.content.cloneNode(true).firstElementChild;
-                const img = card.querySelector('img');
-                const title = card.querySelector('.card-title');
-                const description = card.querySelector('.card-description');
-                const approveBtn = card.querySelector('.approve-btn');
-                const rejectBtn = card.querySelector('.reject-btn');
-                
-                const fileId = getGoogleDriveFileId(idea.image_url);
-                if (fileId) {
-                    // Usamos o formato de link direto para exibição
-                    img.src = `https://drive.google.com/uc?export=view&id=${fileId}`;
-                    img.alt = idea.painting_title; // Texto alternativo para acessibilidade
-                } else {
-                    img.alt = "URL da imagem inválida ou ID não encontrado";
-                    img.src = ""; // Evita uma imagem quebrada
-                    console.warn('Não foi possível extrair o File ID da URL:', idea.image_url);
+                if (error) throw error;
+                if (data.length === 0) {
+                    loadingMessage.textContent = 'Nenhuma obra para revisar. O ateliê está em dia!';
+                    return;
                 }
+                loadingMessage.style.display = 'none';
 
-                title.textContent = idea.painting_title || 'Título não encontrado';
-                description.textContent = idea.description;
-                approveBtn.dataset.id = idea.id;
-                rejectBtn.dataset.id = idea.id;
-                rejectBtn.dataset.fileId = fileId;
-                approveBtn.addEventListener('click', handleApprove);
-                rejectBtn.addEventListener('click', handleReject);
-                
-                gallery.appendChild(card);
-            });
-        } catch (error) {
-             loadingMessage.textContent = 'Erro ao buscar dados: ' + error.message;
-             console.error('Supabase Error:', error);
+                data.forEach(idea => {
+                    const card = cardTemplate.content.cloneNode(true).firstElementChild;
+                    const img = card.querySelector('img');
+                    const title = card.querySelector('.card-title');
+                    const description = card.querySelector('.card-description');
+                    const approveBtn = card.querySelector('.approve-btn');
+                    const rejectBtn = card.querySelector('.reject-btn');
+                    
+                    const fileId = getGoogleDriveFileId(idea.image_url);
+                    if (fileId) {
+                        img.src = `https://drive.google.com/uc?export=view&id=${fileId}`;
+                        img.alt = idea.painting_title;
+                    } else {
+                        img.alt = "URL da imagem inválida ou ID não encontrado";
+                        img.src = "";
+                        console.warn('Não foi possível extrair o File ID da URL:', idea.image_url);
+                    }
+                    title.textContent = idea.painting_title || 'Título não encontrado';
+                    description.textContent = idea.description;
+                    approveBtn.dataset.id = idea.id;
+                    rejectBtn.dataset.id = idea.id;
+                    rejectBtn.dataset.fileId = fileId;
+                    approveBtn.addEventListener('click', handleApprove);
+                    rejectBtn.addEventListener('click', handleReject);
+                    gallery.appendChild(card);
+                });
+            } catch (error) {
+                 loadingMessage.textContent = 'Erro ao buscar dados: ' + error.message;
+                 console.error('Supabase Error:', error);
+            }
         }
-    }
 
-    async function handleApprove(event) {
-        const button = event.target;
-        const card = button.closest('.card');
-        const ideaId = button.dataset.id;
+        async function handleApprove(event) {
+            const button = event.target;
+            const card = button.closest('.card');
+            const ideaId = button.dataset.id;
+            
+            card.classList.add('processing');
+            try {
+                await fetch(N8N_APPROVE_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ideaId }) });
+                card.remove(); 
+            } catch (error) {
+                alert('Erro ao aprovar. Verifique o console.');
+                console.error('Approve Error:', error);
+                card.classList.remove('processing');
+            }
+        }
+
+        async function handleReject(event) {
+            const button = event.target;
+            const card = button.closest('.card');
+            const ideaId = button.dataset.id;
+            const fileId = button.dataset.fileId;
+            
+            card.classList.add('processing');
+            try {
+                await fetch(N8N_REJECT_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ideaId, fileId: fileId }) });
+                card.remove();
+            } catch (error) {
+                alert('Erro ao rejeitar. Verifique o console.');
+                console.error('Reject Error:', error);
+                card.classList.remove('processing');
+            }
+        }
         
-        card.classList.add('processing');
-        try {
-            await fetch(N8N_APPROVE_WEBHOOK, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: ideaId })
-            });
-            card.remove(); 
-        } catch (error) {
-            alert('Erro ao aprovar. Verifique o console.');
-            console.error('Approve Error:', error);
-            card.classList.remove('processing');
-        }
-    }
-
-    async function handleReject(event) {
-        const button = event.target;
-        const card = button.closest('.card');
-        const ideaId = button.dataset.id;
-        const fileId = button.dataset.fileId;
-        
-        card.classList.add('processing');
-        try {
-            await fetch(N8N_REJECT_WEBHOOK, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: ideaId, fileId: fileId })
-            });
-            card.remove();
-        } catch (error) {
-            alert('Erro ao rejeitar. Verifique o console.');
-            console.error('Reject Error:', error);
-            card.classList.remove('processing');
-        }
-    }
-    
-    fetchAndRenderIdeas();
-</script>
+        fetchAndRenderIdeas();
+    </script>
+</body>
+</html>
