@@ -46,117 +46,113 @@
         </div>
     </template>
 
-    <script>
-        const SUPABASE_URL = 'https://vzmhnponxmrvoqctmpty.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6bWhucG9ueG1ydm9xY3RtcHR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3Mzg5MjYsImV4cCI6MjA3MDMxNDkyNn0.sSfMCpPKwFp2lVLuWnFN066OT0lluMb-sd-kWb1PePg';
-        const N8N_APPROVE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/N8N_APPROVE_WEBHOOK';
-        const N8N_REJECT_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/N8N_REJECT_WEBHOOK';
-        
-        // ******** CORREÇÃO PRINCIPAL AQUI ********
-        // A biblioteca do Supabase cria um objeto global chamado 'supabase'.
-        // Nós o usamos para criar a nossa instância do cliente.
-        const { createClient } = supabase;
-        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        // *****************************************
+   <script>
+    const SUPABASE_URL = 'https://vzmhnponxmrvoqctmpty.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6bWhucG9ueG1ydm9xY3RtcHR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3Mzg5MjYsImV4cCI6MjA3MDMxNDkyNn0.sSfMCpPKwFp2lVLuWnFN066OT0lluMb-sd-kWb1PePg';
+    const N8N_APPROVE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/N8N_APPROVE_WEBHOOK';
+    const N8N_REJECT_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/N8N_REJECT_WEBHOOK';
+    
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const gallery = document.getElementById('gallery');
+    const loadingMessage = document.getElementById('loading');
+    const cardTemplate = document.getElementById('card-template');
 
-        const gallery = document.getElementById('gallery');
-        const loadingMessage = document.getElementById('loading');
-        const cardTemplate = document.getElementById('card-template');
-
-        function getGoogleDriveFileId(url) {
-            if (!url) return null;
-            let fileId = null;
-            let match = url.match(/file\/d\/([a-zA-Z0-9_-]+)/);
-            if (match) {
-                fileId = match[1];
-            } else {
-                match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-                if (match) fileId = match[1];
-            }
-            return fileId;
+    function getGoogleDriveFileId(url) {
+        if (!url) return null;
+        let fileId = null;
+        let match = url.match(/file\/d\/([a-zA-Z0-9_-]+)/);
+        if (match) {
+            fileId = match[1];
+        } else {
+            match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+            if (match) fileId = match[1];
         }
+        return fileId;
+    }
 
-        async function fetchAndRenderIdeas() {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('scene_ideas')
-                    .select('*')
-                    .eq('status', 'pending_review')
-                    .order('created_at', { ascending: false });
+    async function fetchAndRenderIdeas() {
+        try {
+            const { data, error } = await supabaseClient
+                .from('scene_ideas')
+                .select('*')
+                .eq('status', 'pending_review')
+                .order('created_at', { ascending: false });
 
-                if (error) throw error;
-                if (data.length === 0) {
-                    loadingMessage.textContent = 'Nenhuma obra para revisar. O ateliê está em dia!';
-                    return;
+            if (error) throw error;
+            if (data.length === 0) {
+                loadingMessage.textContent = 'Nenhuma obra para revisar. O ateliê está em dia!';
+                return;
+            }
+            loadingMessage.style.display = 'none';
+
+            data.forEach(idea => {
+                const card = cardTemplate.content.cloneNode(true).firstElementChild;
+                const img = card.querySelector('img');
+                const title = card.querySelector('.card-title');
+                const description = card.querySelector('.card-description');
+                const approveBtn = card.querySelector('.approve-btn');
+                const rejectBtn = card.querySelector('.reject-btn');
+                
+                const fileId = getGoogleDriveFileId(idea.image_url);
+                if (fileId) {
+                    // ******** A MUDANÇA ESTÁ AQUI ********
+                    img.src = `https://lh3.googleusercontent.com/d/${fileId}`;
+                    img.alt = idea.painting_title;
+                } else {
+                    img.alt = "URL da imagem inválida ou ID não encontrado";
+                    img.src = "";
+                    console.warn('Não foi possível extrair o File ID da URL:', idea.image_url);
                 }
-                loadingMessage.style.display = 'none';
-
-                data.forEach(idea => {
-                    const card = cardTemplate.content.cloneNode(true).firstElementChild;
-                    const img = card.querySelector('img');
-                    const title = card.querySelector('.card-title');
-                    const description = card.querySelector('.card-description');
-                    const approveBtn = card.querySelector('.approve-btn');
-                    const rejectBtn = card.querySelector('.reject-btn');
-                    
-                    const fileId = getGoogleDriveFileId(idea.image_url);
-                    if (fileId) {
-                        img.src = `https://drive.google.com/uc?export=view&id=${fileId}`;
-                        img.alt = idea.painting_title;
-                    } else {
-                        img.alt = "URL da imagem inválida ou ID não encontrado";
-                        img.src = "";
-                        console.warn('Não foi possível extrair o File ID da URL:', idea.image_url);
-                    }
-                    title.textContent = idea.painting_title || 'Título não encontrado';
-                    description.textContent = idea.description;
-                    approveBtn.dataset.id = idea.id;
-                    rejectBtn.dataset.id = idea.id;
-                    rejectBtn.dataset.fileId = fileId;
-                    approveBtn.addEventListener('click', handleApprove);
-                    rejectBtn.addEventListener('click', handleReject);
-                    gallery.appendChild(card);
-                });
-            } catch (error) {
-                 loadingMessage.textContent = 'Erro ao buscar dados: ' + error.message;
-                 console.error('Supabase Error:', error);
-            }
+                title.textContent = idea.painting_title || 'Título não encontrado';
+                description.textContent = idea.description;
+                approveBtn.dataset.id = idea.id;
+                rejectBtn.dataset.id = idea.id;
+                rejectBtn.dataset.fileId = fileId;
+                approveBtn.addEventListener('click', handleApprove);
+                rejectBtn.addEventListener('click', handleReject);
+                gallery.appendChild(card);
+            });
+        } catch (error) {
+             loadingMessage.textContent = 'Erro ao buscar dados: ' + error.message;
+             console.error('Supabase Error:', error);
         }
+    }
 
-        async function handleApprove(event) {
-            const button = event.target;
-            const card = button.closest('.card');
-            const ideaId = button.dataset.id;
-            
-            card.classList.add('processing');
-            try {
-                await fetch(N8N_APPROVE_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ideaId }) });
-                card.remove(); 
-            } catch (error) {
-                alert('Erro ao aprovar. Verifique o console.');
-                console.error('Approve Error:', error);
-                card.classList.remove('processing');
-            }
-        }
-
-        async function handleReject(event) {
-            const button = event.target;
-            const card = button.closest('.card');
-            const ideaId = button.dataset.id;
-            const fileId = button.dataset.fileId;
-            
-            card.classList.add('processing');
-            try {
-                await fetch(N8N_REJECT_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ideaId, fileId: fileId }) });
-                card.remove();
-            } catch (error) {
-                alert('Erro ao rejeitar. Verifique o console.');
-                console.error('Reject Error:', error);
-                card.classList.remove('processing');
-            }
-        }
+    async function handleApprove(event) {
+        const button = event.target;
+        const card = button.closest('.card');
+        const ideaId = button.dataset.id;
         
-        fetchAndRenderIdeas();
-    </script>
+        card.classList.add('processing');
+        try {
+            await fetch(N8N_APPROVE_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ideaId }) });
+            card.remove(); 
+        } catch (error) {
+            alert('Erro ao aprovar. Verifique o console.');
+            console.error('Approve Error:', error);
+            card.classList.remove('processing');
+        }
+    }
+
+    async function handleReject(event) {
+        const button = event.target;
+        const card = button.closest('.card');
+        const ideaId = button.dataset.id;
+        const fileId = button.dataset.fileId;
+        
+        card.classList.add('processing');
+        try {
+            await fetch(N8N_REJECT_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ideaId, fileId: fileId }) });
+            card.remove();
+        } catch (error) {
+            alert('Erro ao rejeitar. Verifique o console.');
+            console.error('Reject Error:', error);
+            card.classList.remove('processing');
+        }
+    }
+    
+    fetchAndRenderIdeas();
+</script>
 </body>
 </html>
