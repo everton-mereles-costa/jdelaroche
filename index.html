@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ateliê de la Roche - Curation</title>
+    <title>Ateliê de la Roche - Curadoria</title>
     <!-- Import Supabase Client -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -55,42 +55,33 @@
         const N8N_APPROVE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/N8N_APPROVE_WEBHOOK';
         const N8N_REJECT_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/N8N_REJECT_WEBHOOK';
         // -----------------------------
-
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // CORREÇÃO 1: Renomeamos a variável para 'supabaseClient' para evitar conflito.
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const gallery = document.getElementById('gallery');
         const loadingMessage = document.getElementById('loading');
         const cardTemplate = document.getElementById('card-template');
 
-        // Função para extrair o File ID da URL do Google Drive
         function getGoogleDriveFileId(url) {
             if (!url) return null;
-            // Tenta extrair o ID de diferentes formatos de URL do Google Drive
-            const patterns = [
-                /d\/(.*?)\//,          // drive.google.com/file/d/FILE_ID/view
-                /id=([^&]+)/,         // drive.google.com/uc?id=FILE_ID
-                /open\?id=([^&]+)/    // drive.google.com/open?id=FILE_ID
-            ];
+            const patterns = [ /d\/(.*?)\//, /id=([^&]+)/, /open\?id=([^&]+)/ ];
             for (const pattern of patterns) {
                 const match = url.match(pattern);
-                if (match && match[1]) {
-                    return match[1];
-                }
+                if (match && match[1]) return match[1];
             }
             return null;
         }
 
-        // Função para buscar e renderizar as ideias pendentes
         async function fetchAndRenderIdeas() {
             try {
-                const { data, error } = await supabase
+                // CORREÇÃO 2: Usamos a nova variável 'supabaseClient' aqui.
+                const { data, error } = await supabaseClient
                     .from('scene_ideas')
                     .select('*')
                     .eq('status', 'pending_review')
                     .order('created_at', { ascending: false });
 
-                if (error) {
-                    throw error;
-                }
+                if (error) throw error;
 
                 if (data.length === 0) {
                     loadingMessage.textContent = 'Nenhuma obra para revisar. O ateliê está em dia!';
@@ -112,17 +103,14 @@
                         img.src = `https://drive.google.com/uc?export=view&id=${fileId}`;
                     } else {
                         img.alt = "URL da imagem inválida";
-                        img.src = ""; // Evita uma imagem quebrada
+                        img.src = "";
                     }
 
                     title.textContent = idea.painting_title || 'Título não encontrado';
                     description.textContent = idea.description;
-
                     approveBtn.dataset.id = idea.id;
                     rejectBtn.dataset.id = idea.id;
                     rejectBtn.dataset.fileId = fileId;
-
-
                     approveBtn.addEventListener('click', handleApprove);
                     rejectBtn.addEventListener('click', handleReject);
                     
@@ -134,14 +122,12 @@
             }
         }
 
-        // Função para lidar com a aprovação
         async function handleApprove(event) {
             const button = event.target;
             const card = button.closest('.card');
             const ideaId = button.dataset.id;
             
             card.classList.add('processing');
-
             try {
                 await fetch(N8N_APPROVE_WEBHOOK, {
                     method: 'POST',
@@ -156,7 +142,6 @@
             }
         }
 
-        // Função para lidar com a rejeição
         async function handleReject(event) {
             const button = event.target;
             const card = button.closest('.card');
@@ -164,7 +149,6 @@
             const fileId = button.dataset.fileId;
             
             card.classList.add('processing');
-
             try {
                 await fetch(N8N_REJECT_WEBHOOK, {
                     method: 'POST',
@@ -179,7 +163,6 @@
             }
         }
         
-        // Inicia o processo
         fetchAndRenderIdeas();
     </script>
 </body>
