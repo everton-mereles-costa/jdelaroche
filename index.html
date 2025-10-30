@@ -7,7 +7,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #2c2c2c; color: #f0f0f0; margin: 0; padding: 2rem; }
-        h1 { text-align: center; border-bottom: 1px solid #555; padding-bottom: 1rem; }
+        .header { text-align: center; border-bottom: 1px solid #555; padding-bottom: 1.5rem; margin-bottom: 2rem; }
+        .header h1 { margin: 0 0 0.5rem; }
+        .header p { margin: 0; color: #ccc; max-width: 800px; margin-left: auto; margin-right: auto; line-height: 1.5; }
         #gallery { display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center; }
         .card { background-color: #3a3a3a; border-radius: 8px; overflow: hidden; width: 350px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); display: flex; flex-direction: column; }
         .card img { width: 100%; height: 350px; object-fit: cover; background-color: #222; cursor: pointer; transition: transform 0.2s; }
@@ -24,22 +26,37 @@
         .card.processing { opacity: 0.5; pointer-events: none; }
         #loading { text-align: center; font-size: 1.5rem; padding: 4rem; }
 
-        /* Estilos do Lightbox (Zoom) */
-        #lightbox { display: none; position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); justify-content: center; align-items: center; cursor: pointer; }
-        #lightbox img { max-width: 90%; max-height: 90%; box-shadow: 0 0 25px rgba(0,0,0,0.8); }
+        /* Estilos do Lightbox Aprimorado */
+        #lightbox { display: none; position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); cursor: pointer; }
+        #lightbox .content { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; padding: 2rem; box-sizing: border-box; gap: 2rem; }
+        #lightbox img { max-width: 65%; max-height: 90%; box-shadow: 0 0 25px rgba(0,0,0,0.8); object-fit: contain; cursor: default; }
+        #lightbox-info { width: 30%; max-height: 90%; overflow-y: auto; color: #fff; cursor: default; }
+        #lightbox-info h2 { margin-top: 0; }
+        #lightbox-info p { line-height: 1.6; font-size: 1.1rem; }
         #lightbox.active { display: flex; }
     </style>
 </head>
 <body>
 
-    <h1>Ateliê de la Roche - Curadoria</h1>
+    <div class="header">
+        <h1>Ateliê de Jérôme de la Roche</h1>
+        <p>
+            Mestre do Crono-Realismo (1798-1874), Jérôme de la Roche dedicou sua vida a rejeitar o romantismo e a pintar a história como ela "realmente foi". Seu foco eram os momentos não vistos: a logística, a exaustão e a humanidade crua por trás dos grandes eventos. Esta galeria apresenta as suas obras redescobertas para curadoria.
+        </p>
+    </div>
+
     <div id="gallery">
         <p id="loading">Carregando obras pendentes...</p>
     </div>
 
-    <!-- Elemento do Lightbox -->
     <div id="lightbox">
-        <img src="" alt="Visão ampliada">
+        <div class="content">
+            <img src="" alt="Visão ampliada">
+            <div id="lightbox-info">
+                <h2 id="lightbox-title"></h2>
+                <p id="lightbox-description"></p>
+            </div>
+        </div>
     </div>
 
     <template id="card-template">
@@ -68,11 +85,16 @@
         const gallery = document.getElementById('gallery');
         const loadingMessage = document.getElementById('loading');
         const cardTemplate = document.getElementById('card-template');
+        
         const lightbox = document.getElementById('lightbox');
         const lightboxImage = lightbox.querySelector('img');
+        const lightboxTitle = document.getElementById('lightbox-title');
+        const lightboxDescription = document.getElementById('lightbox-description');
 
-        lightbox.addEventListener('click', () => {
-            lightbox.classList.remove('active');
+        lightbox.addEventListener('click', (e) => {
+            if (e.target.id === 'lightbox' || e.target.classList.contains('content')) {
+                lightbox.classList.remove('active');
+            }
         });
 
         function getGoogleDriveFileId(url) {
@@ -121,6 +143,8 @@
 
                         img.addEventListener('click', () => {
                             lightboxImage.src = imageUrl;
+                            lightboxTitle.textContent = idea.painting_title;
+                            lightboxDescription.textContent = idea.description;
                             lightbox.classList.add('active');
                         });
                     } else {
@@ -144,9 +168,9 @@
                  console.error('Supabase Error:', error);
             }
         }
-
+        
         async function handleApprove(event) {
-            event.stopPropagation(); // Impede que o clique no botão também abra o lightbox
+            event.stopPropagation();
             const button = event.target;
             const card = button.closest('.card');
             const ideaId = button.dataset.id;
@@ -163,7 +187,7 @@
         }
 
         async function handleReject(event) {
-            event.stopPropagation(); // Impede que o clique no botão também abra o lightbox
+            event.stopPropagation();
             const button = event.target;
             const card = button.closest('.card');
             const ideaId = button.dataset.id;
@@ -179,7 +203,7 @@
                 card.classList.remove('processing');
             }
         }
-        
+
         fetchAndRenderIdeas();
     </script>
 </body>
