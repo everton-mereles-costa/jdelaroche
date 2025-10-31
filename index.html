@@ -19,26 +19,40 @@
         .nav-tab.active { background-color: #007bff; color: white; }
 
         /* --- Seções da Galeria --- */
-        .gallery-section { display: none; /* Escondido por padrão */ }
-        .gallery-section.active { display: block; /* Mostra a seção ativa */ }
+        .gallery-section { display: none; }
+        .gallery-section.active { display: block; }
         .gallery-grid { display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center; }
-        #loading { text-align: center; font-size: 1.5rem; padding: 4rem; }
         .empty-state { text-align: center; font-size: 1.2rem; padding: 4rem; color: #888; }
         
-        /* --- Estilos dos Cards --- */
+        /* --- Estilos dos Cards Refinados --- */
         .card { background-color: #3a3a3a; border-radius: 8px; overflow: hidden; width: 350px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); display: flex; flex-direction: column; }
         .card img { width: 100%; height: 350px; object-fit: cover; background-color: #222; cursor: pointer; transition: transform 0.2s; }
         .card img:hover { transform: scale(1.03); }
-        .card-content { padding: 1rem; flex-grow: 1; display: flex; flex-direction: column; }
+        .card-content { padding: 1rem; flex-grow: 1; display: flex; flex-direction: column; position: relative; }
         .card-title { font-size: 1.2rem; font-weight: bold; margin: 0; }
         .execution-year { font-style: italic; font-weight: normal; color: #ccc; margin: 0.1rem 0 0.8rem 0; font-size: 1rem; }
         .scene-era { font-weight: bold; color: #bbb; margin-bottom: 1rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; }
-        .artist-motivation { font-style: italic; color: #ddd; border-left: 2px solid #555; padding-left: 1rem; margin-bottom: 1rem; font-size: 0.9rem; }
-        .card-description { font-size: 0.9rem; color: #ccc; flex-grow: 1; max-height: 80px; overflow-y: auto; }
-        .card-actions { display: flex; gap: 1rem; padding: 1rem 0 0 0; border-top: 1px solid #555; margin-top: 1rem; }
-        .card-actions button { flex-grow: 1; padding: 0.8rem; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: all 0.2s; }
-        .approve-btn { background-color: #28a745; color: white; }
-        .reject-btn { background-color: #dc3545; color: white; }
+        
+        .text-summary { 
+            position: relative; 
+            max-height: 3.6em; /* Limita a altura para aproximadamente 2 linhas de texto */
+            overflow: hidden; 
+            font-size: 0.9rem;
+            color: #ccc;
+            line-height: 1.8em;
+        }
+        .text-summary::after {
+            content: '...';
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(to right, rgba(58, 58, 58, 0), #3a3a3a 50%);
+            padding-left: 1rem;
+        }
+        
+        .card-actions { display: flex; gap: 1rem; padding: 1rem 0 0 0; border-top: 1px solid #555; margin-top: auto; }
+        .approve-btn { background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: all 0.2s; padding: 0.8rem; flex-grow: 1;}
+        .reject-btn { background-color: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: all 0.2s; padding: 0.8rem; flex-grow: 1;}
         .approve-btn:hover { background-color: #218838; }
         .reject-btn:hover { background-color: #c82333; }
         .card.processing { opacity: 0.5; pointer-events: none; }
@@ -100,8 +114,7 @@
                 <h3 class="card-title"></h3>
                 <h4 class="execution-year"></h4>
                 <p class="scene-era"></p>
-                <p class="artist-motivation"></p>
-                <p class="card-description"></p>
+                <div class="text-summary"></div>
             </div>
             <div class="card-actions">
                 <button class="approve-btn">Aprovar</button>
@@ -166,8 +179,7 @@
             const title = card.querySelector('.card-title');
             const executionYear = card.querySelector('.execution-year');
             const sceneEra = card.querySelector('.scene-era');
-            const motivation = card.querySelector('.artist-motivation');
-            const description = card.querySelector('.card-description');
+            const summaryContainer = card.querySelector('.text-summary');
             const actions = card.querySelector('.card-actions');
             
             const fileId = getGoogleDriveFileId(idea.image_url);
@@ -193,8 +205,7 @@
             title.textContent = idea.painting_title || 'Título não encontrado';
             executionYear.textContent = idea.execution_year || '';
             sceneEra.textContent = idea.era || '';
-            motivation.textContent = `"${idea.artist_motivation || ''}"`;
-            description.textContent = idea.description;
+            summaryContainer.textContent = `"${idea.artist_motivation || idea.description || ''}"`;
             
             if (idea.status === 'pending_review') {
                 const approveBtn = card.querySelector('.approve-btn');
@@ -259,12 +270,10 @@
                 const response = await fetch(N8N_APPROVE_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ideaId }) });
                 if (!response.ok) throw new Error('Falha na rede ao aprovar.');
                 
-                // Em vez de remover, move o card para a galeria de aprovados
                 card.querySelector('.card-actions').style.display = 'none';
                 document.getElementById('gallery-approved').prepend(card);
                 card.classList.remove('processing');
 
-                // Verifica se a galeria pendente ficou vazia
                 if(document.getElementById('gallery-pending').children.length === 0){
                    document.getElementById('gallery-pending').innerHTML = '<p class="empty-state">Nenhuma obra para revisar. O ateliê está em dia!</p>';
                 }
@@ -289,7 +298,6 @@
                 if (!response.ok) throw new Error('Falha na rede ao rejeitar.');
                 card.remove();
 
-                // Verifica se a galeria pendente ficou vazia
                 if(document.getElementById('gallery-pending').children.length === 0){
                    document.getElementById('gallery-pending').innerHTML = '<p class="empty-state">Nenhuma obra para revisar. O ateliê está em dia!</p>';
                 }
