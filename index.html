@@ -3,26 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ateliê de la Roche - Curadoria</title>
+    <title>Ateliê de la Roche - Galeria & Curadoria</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
+        /* --- Estilos Gerais --- */
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #2c2c2c; color: #f0f0f0; margin: 0; padding: 2rem; }
+        
+        /* --- Cabeçalho e Navegação --- */
         .header { text-align: center; border-bottom: 1px solid #555; padding-bottom: 1.5rem; margin-bottom: 2rem; }
         .header h1 { margin: 0 0 0.5rem; }
         .header p { margin: 0; color: #ccc; max-width: 800px; margin-left: auto; margin-right: auto; line-height: 1.5; }
-        #gallery { display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center; }
+        .nav-tabs { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; }
+        .nav-tab { background-color: #3a3a3a; color: #f0f0f0; padding: 0.8rem 1.5rem; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: all 0.2s; }
+        .nav-tab:hover { background-color: #4a4a4a; }
+        .nav-tab.active { background-color: #007bff; color: white; }
+
+        /* --- Seções da Galeria --- */
+        .gallery-section { display: none; /* Escondido por padrão */ }
+        .gallery-section.active { display: block; /* Mostra a seção ativa */ }
+        .gallery-grid { display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center; }
+        #loading { text-align: center; font-size: 1.5rem; padding: 4rem; }
+        .empty-state { text-align: center; font-size: 1.2rem; padding: 4rem; color: #888; }
+        
+        /* --- Estilos dos Cards --- */
         .card { background-color: #3a3a3a; border-radius: 8px; overflow: hidden; width: 350px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); display: flex; flex-direction: column; }
         .card img { width: 100%; height: 350px; object-fit: cover; background-color: #222; cursor: pointer; transition: transform 0.2s; }
         .card img:hover { transform: scale(1.03); }
         .card-content { padding: 1rem; flex-grow: 1; display: flex; flex-direction: column; }
-        
-        /* Estilos da Hierarquia de Texto */
         .card-title { font-size: 1.2rem; font-weight: bold; margin: 0; }
         .execution-year { font-style: italic; font-weight: normal; color: #ccc; margin: 0.1rem 0 0.8rem 0; font-size: 1rem; }
         .scene-era { font-weight: bold; color: #bbb; margin-bottom: 1rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; }
         .artist-motivation { font-style: italic; color: #ddd; border-left: 2px solid #555; padding-left: 1rem; margin-bottom: 1rem; font-size: 0.9rem; }
         .card-description { font-size: 0.9rem; color: #ccc; flex-grow: 1; max-height: 80px; overflow-y: auto; }
-        
         .card-actions { display: flex; gap: 1rem; padding: 1rem 0 0 0; border-top: 1px solid #555; margin-top: 1rem; }
         .card-actions button { flex-grow: 1; padding: 0.8rem; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: all 0.2s; }
         .approve-btn { background-color: #28a745; color: white; }
@@ -30,9 +42,8 @@
         .approve-btn:hover { background-color: #218838; }
         .reject-btn:hover { background-color: #c82333; }
         .card.processing { opacity: 0.5; pointer-events: none; }
-        #loading { text-align: center; font-size: 1.5rem; padding: 4rem; }
-
-        /* Estilos do Lightbox */
+        
+        /* --- Estilos do Lightbox --- */
         #lightbox { display: none; position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); cursor: pointer; }
         #lightbox .content { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; padding: 2rem; box-sizing: border-box; gap: 2rem; }
         #lightbox img { max-width: 65%; max-height: 90%; box-shadow: 0 0 25px rgba(0,0,0,0.8); object-fit: contain; cursor: default; }
@@ -49,14 +60,25 @@
 
     <div class="header">
         <h1>Ateliê de Jérôme de la Roche</h1>
-        <p>
-            Mestre do Crono-Realismo (1798-1874), Jérôme de la Roche dedicou sua vida a rejeitar o romantismo e a pintar a história como ela "realmente foi". Seu foco eram os momentos não vistos: a logística, a exaustão e a humanidade crua por trás dos grandes eventos. Esta galeria apresenta as suas obras redescobertas para curadoria.
-        </p>
+        <p>Mestre do Crono-Realismo (1798-1874), Jérôme de la Roche dedicou sua vida a rejeitar o romantismo e a pintar a história como ela "realmente foi". Seu foco eram os momentos não vistos: a logística, a exaustão e a humanidade crua por trás dos grandes eventos. Esta galeria apresenta as suas obras redescobertas para curadoria.</p>
     </div>
 
-    <div id="gallery">
-        <p id="loading">Carregando obras pendentes...</p>
-    </div>
+    <nav class="nav-tabs">
+        <button class="nav-tab active" data-tab="pending">Para Revisar</button>
+        <button class="nav-tab" data-tab="approved">Galeria Aprovada</button>
+    </nav>
+    
+    <section id="pending" class="gallery-section active">
+        <div id="gallery-pending" class="gallery-grid">
+            <p id="loading-pending">Carregando obras para revisar...</p>
+        </div>
+    </section>
+    
+    <section id="approved" class="gallery-section">
+        <div id="gallery-approved" class="gallery-grid">
+            <p id="loading-approved">Carregando galeria aprovada...</p>
+        </div>
+    </section>
 
     <div id="lightbox">
         <div class="content">
@@ -97,10 +119,8 @@
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        const gallery = document.getElementById('gallery');
-        const loadingMessage = document.getElementById('loading');
-        const cardTemplate = document.getElementById('card-template');
-        
+        const tabs = document.querySelectorAll('.nav-tab');
+        const sections = document.querySelectorAll('.gallery-section');
         const lightbox = document.getElementById('lightbox');
         const lightboxImage = lightbox.querySelector('img');
         const lightboxTitle = document.getElementById('lightbox-title');
@@ -108,6 +128,16 @@
         const lightboxSceneEra = document.getElementById('lightbox-scene-era');
         const lightboxMotivation = document.getElementById('lightbox-motivation');
         const lightboxDescription = document.getElementById('lightbox-description');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                sections.forEach(s => s.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
 
         lightbox.addEventListener('click', (e) => {
             if (e.target.id === 'lightbox' || e.target.classList.contains('content')) {
@@ -128,79 +158,92 @@
             return fileId;
         }
 
-        async function fetchAndRenderIdeas() {
+        function createCard(idea, targetGallery) {
+            const cardTemplate = document.getElementById('card-template');
+            const card = cardTemplate.content.cloneNode(true).firstElementChild;
+            
+            const img = card.querySelector('img');
+            const title = card.querySelector('.card-title');
+            const executionYear = card.querySelector('.execution-year');
+            const sceneEra = card.querySelector('.scene-era');
+            const motivation = card.querySelector('.artist-motivation');
+            const description = card.querySelector('.card-description');
+            const actions = card.querySelector('.card-actions');
+            
+            const fileId = getGoogleDriveFileId(idea.image_url);
+            if (fileId) {
+                const imageUrl = `https://lh3.googleusercontent.com/d/${fileId}`;
+                img.src = imageUrl;
+                img.alt = idea.painting_title;
+
+                img.addEventListener('click', () => {
+                    lightboxImage.src = imageUrl;
+                    lightboxTitle.textContent = idea.painting_title;
+                    lightboxExecutionYear.textContent = idea.execution_year || '';
+                    lightboxSceneEra.textContent = idea.era || '';
+                    lightboxMotivation.textContent = `"${idea.artist_motivation || ''}"`;
+                    lightboxDescription.textContent = idea.description;
+                    lightbox.classList.add('active');
+                });
+            } else {
+                img.alt = "Imagem não disponível";
+                img.src = "";
+            }
+
+            title.textContent = idea.painting_title || 'Título não encontrado';
+            executionYear.textContent = idea.execution_year || '';
+            sceneEra.textContent = idea.era || '';
+            motivation.textContent = `"${idea.artist_motivation || ''}"`;
+            description.textContent = idea.description;
+            
+            if (idea.status === 'pending_review') {
+                const approveBtn = card.querySelector('.approve-btn');
+                const rejectBtn = card.querySelector('.reject-btn');
+                approveBtn.dataset.id = idea.id;
+                rejectBtn.dataset.id = idea.id;
+                rejectBtn.dataset.fileId = fileId;
+                approveBtn.addEventListener('click', handleApprove);
+                rejectBtn.addEventListener('click', handleReject);
+            } else {
+                actions.style.display = 'none';
+            }
+            
+            targetGallery.appendChild(card);
+        }
+
+        async function fetchAndRenderAll() {
+            const galleryPending = document.getElementById('gallery-pending');
+            const galleryApproved = document.getElementById('gallery-approved');
+            
+            galleryPending.innerHTML = '<p id="loading-pending">Carregando obras para revisar...</p>';
+            galleryApproved.innerHTML = '<p id="loading-approved">Carregando galeria aprovada...</p>';
+            
             try {
-                const { data, error } = await supabaseClient
-                    .from('scene_ideas')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
+                const { data, error } = await supabaseClient.from('scene_ideas').select('*').order('created_at', { ascending: false });
                 if (error) throw error;
+                
+                galleryPending.innerHTML = '';
+                galleryApproved.innerHTML = '';
 
-                if (data.length === 0) {
-                    loadingMessage.textContent = 'Nenhuma obra para exibir.';
-                    return;
+                const pendingItems = data.filter(item => item.status === 'pending_review');
+                const approvedItems = data.filter(item => item.status === 'approved');
+
+                if (pendingItems.length === 0) {
+                    galleryPending.innerHTML = '<p class="empty-state">Nenhuma obra para revisar. O ateliê está em dia!</p>';
+                } else {
+                    pendingItems.forEach(idea => createCard(idea, galleryPending));
+                }
+
+                if (approvedItems.length === 0) {
+                    galleryApproved.innerHTML = '<p class="empty-state">Nenhuma obra foi aprovada ainda.</p>';
+                } else {
+                    approvedItems.forEach(idea => createCard(idea, galleryApproved));
                 }
                 
-                loadingMessage.style.display = 'none';
-
-                data.forEach(idea => {
-                    // Filtra para exibir apenas 'approved' e 'pending_review'
-                    if (idea.status !== 'approved' && idea.status !== 'pending_review') {
-                        return;
-                    }
-                
-                    const card = cardTemplate.content.cloneNode(true).firstElementChild;
-                    const img = card.querySelector('img');
-                    const title = card.querySelector('.card-title');
-                    const executionYear = card.querySelector('.execution-year');
-                    const sceneEra = card.querySelector('.scene-era');
-                    const motivation = card.querySelector('.artist-motivation');
-                    const description = card.querySelector('.card-description');
-                    const actions = card.querySelector('.card-actions');
-                    
-                    const fileId = getGoogleDriveFileId(idea.image_url);
-                    if (fileId) {
-                        const imageUrl = `https://lh3.googleusercontent.com/d/${fileId}`;
-                        img.src = imageUrl;
-                        img.alt = idea.painting_title;
-
-                        img.addEventListener('click', () => {
-                            lightboxImage.src = imageUrl;
-                            lightboxTitle.textContent = idea.painting_title;
-                            lightboxExecutionYear.textContent = idea.execution_year || '';
-                            lightboxSceneEra.textContent = idea.era || '';
-                            lightboxMotivation.textContent = idea.artist_motivation || '';
-                            lightboxDescription.textContent = idea.description;
-                            lightbox.classList.add('active');
-                        });
-                    } else {
-                        img.alt = "Imagem não disponível";
-                    }
-
-                    title.textContent = idea.painting_title || 'Título não encontrado';
-                    executionYear.textContent = idea.execution_year || '';
-                    sceneEra.textContent = idea.era || '';
-                    motivation.textContent = idea.artist_motivation || '';
-                    description.textContent = idea.description;
-                    
-                    // Mostra/Esconde os botões de ação
-                    if (idea.status === 'pending_review') {
-                        const approveBtn = card.querySelector('.approve-btn');
-                        const rejectBtn = card.querySelector('.reject-btn');
-                        approveBtn.dataset.id = idea.id;
-                        rejectBtn.dataset.id = idea.id;
-                        rejectBtn.dataset.fileId = fileId;
-                        approveBtn.addEventListener('click', handleApprove);
-                        rejectBtn.addEventListener('click', handleReject);
-                    } else {
-                        actions.style.display = 'none'; // Esconde os botões para obras já aprovadas
-                    }
-                    
-                    gallery.appendChild(card);
-                });
             } catch (error) {
-                 loadingMessage.textContent = 'Erro ao buscar dados: ' + error.message;
+                const errorMessage = `<p class="empty-state">Erro ao buscar dados: ${error.message}</p>`;
+                galleryPending.innerHTML = errorMessage;
+                galleryApproved.innerHTML = errorMessage;
                  console.error('Supabase Error:', error);
             }
         }
@@ -214,9 +257,18 @@
             card.classList.add('processing');
             try {
                 const response = await fetch(N8N_APPROVE_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ideaId }) });
-                if (!response.ok) throw new Error('Falha na rede');
-                card.querySelector('.card-actions').style.display = 'none'; // Esconde os botões após aprovar
+                if (!response.ok) throw new Error('Falha na rede ao aprovar.');
+                
+                // Em vez de remover, move o card para a galeria de aprovados
+                card.querySelector('.card-actions').style.display = 'none';
+                document.getElementById('gallery-approved').prepend(card);
                 card.classList.remove('processing');
+
+                // Verifica se a galeria pendente ficou vazia
+                if(document.getElementById('gallery-pending').children.length === 0){
+                   document.getElementById('gallery-pending').innerHTML = '<p class="empty-state">Nenhuma obra para revisar. O ateliê está em dia!</p>';
+                }
+
             } catch (error) {
                 alert('Erro ao aprovar. Verifique o console.');
                 console.error('Approve Error:', error);
@@ -234,8 +286,13 @@
             card.classList.add('processing');
             try {
                 const response = await fetch(N8N_REJECT_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ideaId, fileId: fileId }) });
-                if (!response.ok) throw new Error('Falha na rede');
+                if (!response.ok) throw new Error('Falha na rede ao rejeitar.');
                 card.remove();
+
+                // Verifica se a galeria pendente ficou vazia
+                if(document.getElementById('gallery-pending').children.length === 0){
+                   document.getElementById('gallery-pending').innerHTML = '<p class="empty-state">Nenhuma obra para revisar. O ateliê está em dia!</p>';
+                }
             } catch (error) {
                 alert('Erro ao rejeitar. Verifique o console.');
                 console.error('Reject Error:', error);
@@ -243,7 +300,7 @@
             }
         }
 
-        fetchAndRenderIdeas();
+        fetchAndRenderAll();
     </script>
 </body>
 </html>
