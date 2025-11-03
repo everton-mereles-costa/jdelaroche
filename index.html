@@ -1,30 +1,23 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ateliê de la Roche - Galeria & Curadoria</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        /* --- Estilos Gerais --- */
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #2c2c2c; color: #f0f0f0; margin: 0; padding: 2rem; }
-        
-        /* --- Cabeçalho e Navegação --- */
         .header { text-align: center; border-bottom: 1px solid #555; padding-bottom: 1.5rem; margin-bottom: 2rem; }
         .header h1 { margin: 0 0 0.5rem; }
         .header p { margin: 0; color: #ccc; max-width: 800px; margin-left: auto; margin-right: auto; line-height: 1.5; }
-        .nav-tabs { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; }
+        .nav-tabs { display: flex; justify-content: center; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
         .nav-tab { background-color: #3a3a3a; color: #f0f0f0; padding: 0.8rem 1.5rem; border: none; border-radius: 5px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: all 0.2s; }
         .nav-tab:hover { background-color: #4a4a4a; }
         .nav-tab.active { background-color: #007bff; color: white; }
-
-        /* --- Seções da Galeria --- */
         .gallery-section { display: none; }
         .gallery-section.active { display: block; }
         .gallery-grid { display: flex; flex-wrap: wrap; gap: 2rem; justify-content: center; }
         .empty-state { text-align: center; font-size: 1.2rem; padding: 4rem; color: #888; }
-        
-        /* --- Estilos dos Cards Refinados --- */
         .card { background-color: #3a3a3a; border-radius: 8px; overflow: hidden; width: 350px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); display: flex; flex-direction: column; }
         .card img { width: 100%; height: 350px; object-fit: cover; background-color: #222; cursor: pointer; transition: transform 0.2s; }
         .card img:hover { transform: scale(1.03); }
@@ -32,32 +25,29 @@
         .card-title { font-size: 1.2rem; font-weight: bold; margin: 0; }
         .execution-year { font-style: italic; font-weight: normal; color: #ccc; margin: 0.1rem 0 0.8rem 0; font-size: 1rem; }
         .scene-era { font-weight: bold; color: #bbb; margin-bottom: 1rem; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; }
-        
-        .text-summary { 
-            position: relative; 
-            max-height: 3.6em; /* Limita a altura para aproximadamente 2 linhas de texto */
-            overflow: hidden; 
-            font-size: 0.9rem;
-            color: #ccc;
-            line-height: 1.8em;
-        }
-        .text-summary::after {
-            content: '...';
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            background: linear-gradient(to right, rgba(58, 58, 58, 0), #3a3a3a 50%);
-            padding-left: 1rem;
-        }
-        
+        .text-summary { position: relative; max-height: 3.6em; overflow: hidden; font-size: 0.9rem; color: #ccc; line-height: 1.8em; }
+        .text-summary::after { content: '...'; position: absolute; bottom: 0; right: 0; background: linear-gradient(to right, rgba(58, 58, 58, 0), #3a3a3a 50%); padding-left: 1rem; }
         .card-actions { display: flex; gap: 1rem; padding: 1rem 0 0 0; border-top: 1px solid #555; margin-top: auto; }
-        .approve-btn { background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: all 0.2s; padding: 0.8rem; flex-grow: 1;}
-        .reject-btn { background-color: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1rem; transition: all 0.2s; padding: 0.8rem; flex-grow: 1;}
+        
+        /* Estilos genéricos para os botões de ação */
+        .approve-btn, .reject-btn, .publish-btn, .sell-btn {
+            color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; 
+            font-size: 1rem; transition: all 0.2s; padding: 0.8rem; flex-grow: 1;
+        }
+
+        .approve-btn { background-color: #28a745; }
+        .reject-btn { background-color: #dc3545; }
         .approve-btn:hover { background-color: #218838; }
         .reject-btn:hover { background-color: #c82333; }
-        .card.processing { opacity: 0.5; pointer-events: none; }
+
+        /* --- NOVOS ESTILOS ADICIONADOS --- */
+        .publish-btn { background-color: #007bff; }
+        .publish-btn:hover { background-color: #0056b3; }
+        .sell-btn { background-color: #ffc107; color: #212529; }
+        .sell-btn:hover { background-color: #e0a800; }
+        /* --- FIM DOS NOVOS ESTILOS --- */
         
-        /* --- Estilos do Lightbox --- */
+        .card.processing { opacity: 0.5; pointer-events: none; }
         #lightbox { display: none; position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); cursor: pointer; }
         #lightbox .content { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; padding: 2rem; box-sizing: border-box; gap: 2rem; }
         #lightbox img { max-width: 65%; max-height: 90%; box-shadow: 0 0 25px rgba(0,0,0,0.8); object-fit: contain; cursor: default; }
@@ -71,32 +61,34 @@
     </style>
 </head>
 <body>
-
     <div class="header">
-        <h1>Ateliê de Jérôme de la Roche</h1>
-        <p>Mestre do Crono-Realismo (1798-1874), Jérôme de la Roche dedicou sua vida a rejeitar o romantismo e a pintar a história como ela "realmente foi". Seu foco eram os momentos não vistos: a logística, a exaustão e a humanidade crua por trás dos grandes eventos. Esta galeria apresenta as suas obras redescobertas para curadoria.</p>
+        <h1>Ateliê de la Roche</h1>
+        <p>Plataforma de curadoria para a galeria de arte. Revise as novas obras submetidas, aprove-as para a galeria interna, publique-as no site oficial e gerencie as vendas.</p>
     </div>
 
+    <!-- NAVEGAÇÃO MODIFICADA -->
     <nav class="nav-tabs">
         <button class="nav-tab active" data-tab="pending">Para Revisar</button>
         <button class="nav-tab" data-tab="approved">Galeria Aprovada</button>
+        <button class="nav-tab" data-tab="published">Galeria Publicada</button>
     </nav>
-    
+
     <section id="pending" class="gallery-section active">
-        <div id="gallery-pending" class="gallery-grid">
-            <p id="loading-pending">Carregando obras para revisar...</p>
-        </div>
+        <div id="gallery-pending" class="gallery-grid"></div>
     </section>
     
     <section id="approved" class="gallery-section">
-        <div id="gallery-approved" class="gallery-grid">
-            <p id="loading-approved">Carregando galeria aprovada...</p>
-        </div>
+        <div id="gallery-approved" class="gallery-grid"></div>
+    </section>
+
+    <!-- NOVA SEÇÃO ADICIONADA -->
+    <section id="published" class="gallery-section">
+        <div id="gallery-published" class="gallery-grid"></div>
     </section>
 
     <div id="lightbox">
         <div class="content">
-            <img src="" alt="Visão ampliada">
+            <img src="" alt="Obra de arte em destaque">
             <div id="lightbox-info">
                 <h2 id="lightbox-title"></h2>
                 <h3 id="lightbox-execution-year"></h3>
@@ -109,16 +101,15 @@
 
     <template id="card-template">
         <div class="card">
-            <img src="" alt="Artwork">
+            <img src="" alt="">
             <div class="card-content">
                 <h3 class="card-title"></h3>
-                <h4 class="execution-year"></h4>
+                <p class="execution-year"></p>
                 <p class="scene-era"></p>
-                <div class="text-summary"></div>
-            </div>
-            <div class="card-actions">
-                <button class="approve-btn">Aprovar</button>
-                <button class="reject-btn">Rejeitar</button>
+                <p class="text-summary"></p>
+                <div class="card-actions">
+                    <!-- Os botões serão inseridos dinamicamente aqui pelo JavaScript -->
+                </div>
             </div>
         </div>
     </template>
@@ -128,6 +119,8 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6bWhucG9ueG1ydm9xY3RtcHR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3Mzg5MjYsImV4cCI6MjA3MDMxNDkyNn0.sSfMCpPKwFp2lVLuWnFN066OT0lluMb-sd-kWb1PePg';
         const N8N_APPROVE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/N8N_APPROVE_WEBHOOK';
         const N8N_REJECT_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/N8N_REJECT_WEBHOOK';
+        // --- NOVO WEBHOOK ADICIONADO ---
+        const N8N_PUBLISH_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/publica-delaroche';
         
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -171,6 +164,7 @@
             return fileId;
         }
 
+        // --- FUNÇÃO createCard MODIFICADA PARA LIDAR COM TODOS OS STATUS ---
         function createCard(idea, targetGallery) {
             const cardTemplate = document.getElementById('card-template');
             const card = cardTemplate.content.cloneNode(true).firstElementChild;
@@ -181,6 +175,7 @@
             const sceneEra = card.querySelector('.scene-era');
             const summaryContainer = card.querySelector('.text-summary');
             const actions = card.querySelector('.card-actions');
+            actions.innerHTML = ''; // Limpa quaisquer botões padrão do template
             
             const fileId = getGoogleDriveFileId(idea.image_url);
             if (fileId) {
@@ -207,27 +202,64 @@
             sceneEra.textContent = idea.era || '';
             summaryContainer.textContent = `"${idea.artist_motivation || idea.description || ''}"`;
             
-            if (idea.status === 'pending_review') {
-                const approveBtn = card.querySelector('.approve-btn');
-                const rejectBtn = card.querySelector('.reject-btn');
-                approveBtn.dataset.id = idea.id;
-                rejectBtn.dataset.id = idea.id;
-                rejectBtn.dataset.fileId = fileId;
-                approveBtn.addEventListener('click', handleApprove);
-                rejectBtn.addEventListener('click', handleReject);
-            } else {
-                actions.style.display = 'none';
+            // Lógica para adicionar os botões corretos com base no status da obra
+            switch(idea.status) {
+                case 'pending_review':
+                    const approveBtn = document.createElement('button');
+                    approveBtn.className = 'approve-btn';
+                    approveBtn.textContent = 'Aprovar';
+                    approveBtn.dataset.id = idea.id;
+                    approveBtn.addEventListener('click', handleApprove);
+                    
+                    const rejectBtn = document.createElement('button');
+                    rejectBtn.className = 'reject-btn';
+                    rejectBtn.textContent = 'Rejeitar';
+                    rejectBtn.dataset.id = idea.id;
+                    rejectBtn.dataset.fileId = fileId;
+                    rejectBtn.addEventListener('click', handleReject);
+                    
+                    actions.appendChild(approveBtn);
+                    actions.appendChild(rejectBtn);
+                    break;
+
+                case 'approved':
+                    const publishBtn = document.createElement('button');
+                    publishBtn.className = 'publish-btn';
+                    publishBtn.textContent = 'Publicar';
+                    publishBtn.dataset.id = idea.id;
+                    publishBtn.addEventListener('click', handlePublish);
+                    actions.appendChild(publishBtn);
+                    break;
+                
+                case 'published':
+                    const sellBtn = document.createElement('button');
+                    sellBtn.className = 'sell-btn';
+                    sellBtn.innerHTML = '&#36; Vender Arte'; // Adicionando ícone de cifrão
+                    sellBtn.dataset.id = idea.id;
+                    sellBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        alert(`Funcionalidade "Vender Arte" para a obra ID: ${idea.id} a ser implementada.`);
+                    });
+                    actions.appendChild(sellBtn);
+                    break;
+                
+                default:
+                    actions.style.display = 'none';
+                    break;
             }
             
             targetGallery.appendChild(card);
         }
 
+        // --- FUNÇÃO fetchAndRenderAll MODIFICADA PARA INCLUIR A GALERIA PUBLICADA ---
         async function fetchAndRenderAll() {
             const galleryPending = document.getElementById('gallery-pending');
             const galleryApproved = document.getElementById('gallery-approved');
+            const galleryPublished = document.getElementById('gallery-published');
             
             galleryPending.innerHTML = '<p id="loading-pending">Carregando obras para revisar...</p>';
             galleryApproved.innerHTML = '<p id="loading-approved">Carregando galeria aprovada...</p>';
+            galleryPublished.innerHTML = '<p id="loading-published">Carregando galeria publicada...</p>';
             
             try {
                 const { data, error } = await supabaseClient.from('scene_ideas').select('*').order('created_at', { ascending: false });
@@ -235,9 +267,11 @@
                 
                 galleryPending.innerHTML = '';
                 galleryApproved.innerHTML = '';
+                galleryPublished.innerHTML = '';
 
                 const pendingItems = data.filter(item => item.status === 'pending_review');
                 const approvedItems = data.filter(item => item.status === 'approved');
+                const publishedItems = data.filter(item => item.status === 'published');
 
                 if (pendingItems.length === 0) {
                     galleryPending.innerHTML = '<p class="empty-state">Nenhuma obra para revisar. O ateliê está em dia!</p>';
@@ -250,12 +284,19 @@
                 } else {
                     approvedItems.forEach(idea => createCard(idea, galleryApproved));
                 }
+
+                if (publishedItems.length === 0) {
+                    galleryPublished.innerHTML = '<p class="empty-state">Nenhuma obra foi publicada no site ainda.</p>';
+                } else {
+                    publishedItems.forEach(idea => createCard(idea, galleryPublished));
+                }
                 
             } catch (error) {
                 const errorMessage = `<p class="empty-state">Erro ao buscar dados: ${error.message}</p>`;
                 galleryPending.innerHTML = errorMessage;
                 galleryApproved.innerHTML = errorMessage;
-                 console.error('Supabase Error:', error);
+                galleryPublished.innerHTML = errorMessage;
+                console.error('Supabase Error:', error);
             }
         }
         
@@ -270,12 +311,25 @@
                 const response = await fetch(N8N_APPROVE_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ideaId }) });
                 if (!response.ok) throw new Error('Falha na rede ao aprovar.');
                 
-                card.querySelector('.card-actions').style.display = 'none';
+                // Transforma o card para a versão "Aprovada"
+                const actions = card.querySelector('.card-actions');
+                actions.innerHTML = ''; // Limpa botões de aprovar/rejeitar
+                const publishBtn = document.createElement('button');
+                publishBtn.className = 'publish-btn';
+                publishBtn.textContent = 'Publicar';
+                publishBtn.dataset.id = ideaId;
+                publishBtn.addEventListener('click', handlePublish);
+                actions.appendChild(publishBtn);
+
+                // Move o card para a galeria aprovada
                 document.getElementById('gallery-approved').prepend(card);
                 card.classList.remove('processing');
 
                 if(document.getElementById('gallery-pending').children.length === 0){
                    document.getElementById('gallery-pending').innerHTML = '<p class="empty-state">Nenhuma obra para revisar. O ateliê está em dia!</p>';
+                }
+                if(document.querySelector('#gallery-approved .empty-state')) {
+                    document.querySelector('#gallery-approved .empty-state').remove();
                 }
 
             } catch (error) {
@@ -304,6 +358,51 @@
             } catch (error) {
                 alert('Erro ao rejeitar. Verifique o console.');
                 console.error('Reject Error:', error);
+                card.classList.remove('processing');
+            }
+        }
+        
+        // --- NOVA FUNÇÃO handlePublish ---
+        async function handlePublish(event) {
+            event.stopPropagation();
+            const button = event.target;
+            const card = button.closest('.card');
+            const ideaId = button.dataset.id;
+
+            card.classList.add('processing');
+            try {
+                const response = await fetch(N8N_PUBLISH_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ideaId }) });
+                if (!response.ok) throw new Error('Falha na rede ao publicar.');
+
+                // Transforma o card para a versão "Publicada"
+                const actions = card.querySelector('.card-actions');
+                actions.innerHTML = ''; // Limpa o botão de publicar
+                const sellBtn = document.createElement('button');
+                sellBtn.className = 'sell-btn';
+                sellBtn.innerHTML = '&#36; Vender Arte';
+                sellBtn.dataset.id = ideaId;
+                sellBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    alert(`Funcionalidade "Vender Arte" para a obra ID: ${ideaId} a ser implementada.`);
+                });
+                actions.appendChild(sellBtn);
+
+                // Move o card para a galeria publicada
+                document.getElementById('gallery-published').prepend(card);
+                card.classList.remove('processing');
+
+                // Verifica se a galeria de aprovados ficou vazia
+                if(document.getElementById('gallery-approved').children.length === 0){
+                   document.getElementById('gallery-approved').innerHTML = '<p class="empty-state">Nenhuma obra foi aprovada ainda.</p>';
+                }
+                // Remove a mensagem de "vazio" da galeria publicada, se houver
+                if(document.querySelector('#gallery-published .empty-state')) {
+                    document.querySelector('#gallery-published .empty-state').remove();
+                }
+
+            } catch (error) {
+                alert('Erro ao publicar. Verifique o console.');
+                console.error('Publish Error:', error);
                 card.classList.remove('processing');
             }
         }
