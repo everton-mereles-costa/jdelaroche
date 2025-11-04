@@ -29,7 +29,6 @@
         .text-summary::after { content: '...'; position: absolute; bottom: 0; right: 0; background: linear-gradient(to right, rgba(58, 58, 58, 0), #3a3a3a 50%); padding-left: 1rem; }
         .card-actions { display: flex; gap: 1rem; padding: 1rem 0 0 0; border-top: 1px solid #555; margin-top: auto; }
         
-        /* Estilos genéricos para os botões de ação */
         .approve-btn, .reject-btn, .publish-btn, .sell-btn {
             color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; 
             font-size: 1rem; transition: all 0.2s; padding: 0.8rem; flex-grow: 1;
@@ -40,12 +39,10 @@
         .approve-btn:hover { background-color: #218838; }
         .reject-btn:hover { background-color: #c82333; }
 
-        /* --- NOVOS ESTILOS ADICIONADOS --- */
         .publish-btn { background-color: #007bff; }
         .publish-btn:hover { background-color: #0056b3; }
         .sell-btn { background-color: #ffc107; color: #212529; }
         .sell-btn:hover { background-color: #e0a800; }
-        /* --- FIM DOS NOVOS ESTILOS --- */
         
         .card.processing { opacity: 0.5; pointer-events: none; }
         #lightbox { display: none; position: fixed; z-index: 1000; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); cursor: pointer; }
@@ -66,7 +63,6 @@
         <p>Plataforma de curadoria para a galeria de arte. Revise as novas obras submetidas, aprove-as para a galeria interna, publique-as no site oficial e gerencie as vendas.</p>
     </div>
 
-    <!-- NAVEGAÇÃO MODIFICADA -->
     <nav class="nav-tabs">
         <button class="nav-tab active" data-tab="pending">Para Revisar</button>
         <button class="nav-tab" data-tab="approved">Galeria Aprovada</button>
@@ -81,7 +77,6 @@
         <div id="gallery-approved" class="gallery-grid"></div>
     </section>
 
-    <!-- NOVA SEÇÃO ADICIONADA -->
     <section id="published" class="gallery-section">
         <div id="gallery-published" class="gallery-grid"></div>
     </section>
@@ -107,9 +102,7 @@
                 <p class="execution-year"></p>
                 <p class="scene-era"></p>
                 <p class="text-summary"></p>
-                <div class="card-actions">
-                    <!-- Os botões serão inseridos dinamicamente aqui pelo JavaScript -->
-                </div>
+                <div class="card-actions"></div>
             </div>
         </div>
     </template>
@@ -119,7 +112,6 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6bWhucG9ueG1ydm9xY3RtcHR5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ3Mzg5MjYsImV4cCI6MjA3MDMxNDkyNn0.sSfMCpPKwFp2lVLuWnFN066OT0lluMb-sd-kWb1PePg';
         const N8N_APPROVE_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/N8N_APPROVE_WEBHOOK';
         const N8N_REJECT_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/N8N_REJECT_WEBHOOK';
-        // --- NOVO WEBHOOK ADICIONADO ---
         const N8N_PUBLISH_WEBHOOK = 'https://n8n-n8n.znxk1t.easypanel.host/webhook/publica-delaroche';
         
         const { createClient } = supabase;
@@ -155,34 +147,27 @@
             if (!url) return null;
             let fileId = null;
             let match = url.match(/file\/d\/([a-zA-Z0-9_-]+)/);
-            if (match) {
-                fileId = match[1];
-            } else {
-                match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
-                if (match) fileId = match[1];
-            }
+            if (match) fileId = match[1];
+            else { match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/); if (match) fileId = match[1]; }
             return fileId;
         }
 
-        // --- FUNÇÃO createCard MODIFICADA PARA LIDAR COM TODOS OS STATUS ---
         function createCard(idea, targetGallery) {
             const cardTemplate = document.getElementById('card-template');
             const card = cardTemplate.content.cloneNode(true).firstElementChild;
-            
             const img = card.querySelector('img');
             const title = card.querySelector('.card-title');
             const executionYear = card.querySelector('.execution-year');
             const sceneEra = card.querySelector('.scene-era');
             const summaryContainer = card.querySelector('.text-summary');
             const actions = card.querySelector('.card-actions');
-            actions.innerHTML = ''; // Limpa quaisquer botões padrão do template
+            actions.innerHTML = '';
             
             const fileId = getGoogleDriveFileId(idea.image_url);
             if (fileId) {
                 const imageUrl = `https://lh3.googleusercontent.com/d/${fileId}`;
                 img.src = imageUrl;
                 img.alt = idea.painting_title;
-
                 img.addEventListener('click', () => {
                     lightboxImage.src = imageUrl;
                     lightboxTitle.textContent = idea.painting_title;
@@ -202,7 +187,6 @@
             sceneEra.textContent = idea.era || '';
             summaryContainer.textContent = `"${idea.artist_motivation || idea.description || ''}"`;
             
-            // Lógica para adicionar os botões corretos com base no status da obra
             switch(idea.status) {
                 case 'pending_review':
                     const approveBtn = document.createElement('button');
@@ -221,7 +205,6 @@
                     actions.appendChild(approveBtn);
                     actions.appendChild(rejectBtn);
                     break;
-
                 case 'approved':
                     const publishBtn = document.createElement('button');
                     publishBtn.className = 'publish-btn';
@@ -230,11 +213,10 @@
                     publishBtn.addEventListener('click', handlePublish);
                     actions.appendChild(publishBtn);
                     break;
-                
                 case 'published':
                     const sellBtn = document.createElement('button');
                     sellBtn.className = 'sell-btn';
-                    sellBtn.innerHTML = '&#36; Vender Arte'; // Adicionando ícone de cifrão
+                    sellBtn.innerHTML = '&#36; Vender Arte';
                     sellBtn.dataset.id = idea.id;
                     sellBtn.addEventListener('click', (e) => {
                         e.stopPropagation();
@@ -242,16 +224,13 @@
                     });
                     actions.appendChild(sellBtn);
                     break;
-                
                 default:
                     actions.style.display = 'none';
                     break;
             }
-            
             targetGallery.appendChild(card);
         }
 
-        // --- FUNÇÃO fetchAndRenderAll MODIFICADA PARA INCLUIR A GALERIA PUBLICADA ---
         async function fetchAndRenderAll() {
             const galleryPending = document.getElementById('gallery-pending');
             const galleryApproved = document.getElementById('gallery-approved');
@@ -265,31 +244,17 @@
                 const { data, error } = await supabaseClient.from('scene_ideas').select('*').order('created_at', { ascending: false });
                 if (error) throw error;
                 
-                galleryPending.innerHTML = '';
-                galleryApproved.innerHTML = '';
-                galleryPublished.innerHTML = '';
-
+                galleryPending.innerHTML = ''; galleryApproved.innerHTML = ''; galleryPublished.innerHTML = '';
                 const pendingItems = data.filter(item => item.status === 'pending_review');
                 const approvedItems = data.filter(item => item.status === 'approved');
                 const publishedItems = data.filter(item => item.status === 'published');
 
-                if (pendingItems.length === 0) {
-                    galleryPending.innerHTML = '<p class="empty-state">Nenhuma obra para revisar. O ateliê está em dia!</p>';
-                } else {
-                    pendingItems.forEach(idea => createCard(idea, galleryPending));
-                }
-
-                if (approvedItems.length === 0) {
-                    galleryApproved.innerHTML = '<p class="empty-state">Nenhuma obra foi aprovada ainda.</p>';
-                } else {
-                    approvedItems.forEach(idea => createCard(idea, galleryApproved));
-                }
-
-                if (publishedItems.length === 0) {
-                    galleryPublished.innerHTML = '<p class="empty-state">Nenhuma obra foi publicada no site ainda.</p>';
-                } else {
-                    publishedItems.forEach(idea => createCard(idea, galleryPublished));
-                }
+                if (pendingItems.length === 0) { galleryPending.innerHTML = '<p class="empty-state">Nenhuma obra para revisar. O ateliê está em dia!</p>'; } 
+                else { pendingItems.forEach(idea => createCard(idea, galleryPending)); }
+                if (approvedItems.length === 0) { galleryApproved.innerHTML = '<p class="empty-state">Nenhuma obra foi aprovada ainda.</p>'; } 
+                else { approvedItems.forEach(idea => createCard(idea, galleryApproved)); }
+                if (publishedItems.length === 0) { galleryPublished.innerHTML = '<p class="empty-state">Nenhuma obra foi publicada no site ainda.</p>'; } 
+                else { publishedItems.forEach(idea => createCard(idea, galleryPublished)); }
                 
             } catch (error) {
                 const errorMessage = `<p class="empty-state">Erro ao buscar dados: ${error.message}</p>`;
@@ -300,6 +265,7 @@
             }
         }
         
+        // --- FUNÇÃO handleApprove REFATORADA (UI ROBUSTA) ---
         async function handleApprove(event) {
             event.stopPropagation();
             const button = event.target;
@@ -309,9 +275,12 @@
             card.classList.add('processing');
             try {
                 const response = await fetch(N8N_APPROVE_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ideaId }) });
-                if (!response.ok) throw new Error('Falha na rede ao aprovar.');
                 
-                // Transforma o card para a versão "Aprovada"
+                if (!response.ok) {
+                    throw new Error(`Falha na rede ao aprovar. Status: ${response.status}`);
+                }
+                
+                // SUCESSO: A requisição foi confirmada. Agora, atualizamos a UI.
                 const actions = card.querySelector('.card-actions');
                 actions.innerHTML = ''; // Limpa botões de aprovar/rejeitar
                 const publishBtn = document.createElement('button');
@@ -321,9 +290,7 @@
                 publishBtn.addEventListener('click', handlePublish);
                 actions.appendChild(publishBtn);
 
-                // Move o card para a galeria aprovada
                 document.getElementById('gallery-approved').prepend(card);
-                card.classList.remove('processing');
 
                 if(document.getElementById('gallery-pending').children.length === 0){
                    document.getElementById('gallery-pending').innerHTML = '<p class="empty-state">Nenhuma obra para revisar. O ateliê está em dia!</p>';
@@ -333,12 +300,16 @@
                 }
 
             } catch (error) {
-                alert('Erro ao aprovar. Verifique o console.');
+                // FALHA: A requisição falhou. Informamos o usuário e não alteramos a UI.
+                alert('Ocorreu um erro ao aprovar a obra. A operação foi cancelada. Verifique o console para mais detalhes.');
                 console.error('Approve Error:', error);
+            } finally {
+                // SEMPRE: Removemos o estado de processamento, seja em caso de sucesso ou falha.
                 card.classList.remove('processing');
             }
         }
 
+        // --- FUNÇÃO handleReject REFATORADA (UI ROBUSTA) ---
         async function handleReject(event) {
             event.stopPropagation();
             const button = event.target;
@@ -349,20 +320,25 @@
             card.classList.add('processing');
             try {
                 const response = await fetch(N8N_REJECT_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ideaId, fileId: fileId }) });
-                if (!response.ok) throw new Error('Falha na rede ao rejeitar.');
+                
+                if (!response.ok) {
+                     throw new Error(`Falha na rede ao rejeitar. Status: ${response.status}`);
+                }
+
+                // SUCESSO: A requisição foi confirmada. Agora, removemos o card.
                 card.remove();
 
                 if(document.getElementById('gallery-pending').children.length === 0){
                    document.getElementById('gallery-pending').innerHTML = '<p class="empty-state">Nenhuma obra para revisar. O ateliê está em dia!</p>';
                 }
             } catch (error) {
-                alert('Erro ao rejeitar. Verifique o console.');
+                // FALHA: A requisição falhou. Informamos o usuário e restauramos a UI.
+                alert('Ocorreu um erro ao rejeitar a obra. A operação foi cancelada. Verifique o console para mais detalhes.');
                 console.error('Reject Error:', error);
-                card.classList.remove('processing');
+                card.classList.remove('processing'); // Removemos o 'processing' apenas no erro.
             }
         }
         
-        // --- NOVA FUNÇÃO handlePublish ---
         async function handlePublish(event) {
             event.stopPropagation();
             const button = event.target;
@@ -374,9 +350,8 @@
                 const response = await fetch(N8N_PUBLISH_WEBHOOK, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ideaId }) });
                 if (!response.ok) throw new Error('Falha na rede ao publicar.');
 
-                // Transforma o card para a versão "Publicada"
                 const actions = card.querySelector('.card-actions');
-                actions.innerHTML = ''; // Limpa o botão de publicar
+                actions.innerHTML = '';
                 const sellBtn = document.createElement('button');
                 sellBtn.className = 'sell-btn';
                 sellBtn.innerHTML = '&#36; Vender Arte';
@@ -387,22 +362,18 @@
                 });
                 actions.appendChild(sellBtn);
 
-                // Move o card para a galeria publicada
                 document.getElementById('gallery-published').prepend(card);
-                card.classList.remove('processing');
-
-                // Verifica se a galeria de aprovados ficou vazia
+                
                 if(document.getElementById('gallery-approved').children.length === 0){
                    document.getElementById('gallery-approved').innerHTML = '<p class="empty-state">Nenhuma obra foi aprovada ainda.</p>';
                 }
-                // Remove a mensagem de "vazio" da galeria publicada, se houver
                 if(document.querySelector('#gallery-published .empty-state')) {
                     document.querySelector('#gallery-published .empty-state').remove();
                 }
-
             } catch (error) {
                 alert('Erro ao publicar. Verifique o console.');
                 console.error('Publish Error:', error);
+            } finally {
                 card.classList.remove('processing');
             }
         }
